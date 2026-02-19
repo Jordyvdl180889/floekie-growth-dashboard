@@ -1,0 +1,181 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["dashboard"]
+}
+
+model Client {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  passwordHash  String   @map("password_hash")
+  brandPrimary  String?  @map("brand_primary")
+  brandGradient String?  @map("brand_gradient")
+  logoUrl       String?  @map("logo_url")
+  industry      String?
+  context       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  experiments  Experiment[]
+  growthLoops  GrowthLoop[]
+  sprints      Sprint[]
+  deliverables Deliverable[]
+
+  @@map("clients")
+  @@schema("dashboard")
+}
+
+model Experiment {
+  id                  Int       @id @default(autoincrement())
+  clientId            String    @map("client_id")
+  client              Client    @relation(fields: [clientId], references: [id])
+  name                String
+  description         String?
+  hypothesis          String?
+  tier                Int
+  aarrStage           String    @map("aarrr_stage")
+  riseReach           Float     @default(0) @map("rise_reach")
+  riseImpact          Float     @default(0) @map("rise_impact")
+  riseConfidence      Float     @default(0) @map("rise_confidence")
+  riseEase            Float     @default(0) @map("rise_ease")
+  riseTotal           Float     @default(0) @map("rise_total")
+  riseInputs          Json?     @map("rise_inputs")
+  status              String    @default("planned")
+  timeline            String?
+  cost                String?
+  expectedEffect      String?   @map("expected_effect")
+  successMetric       String?   @map("success_metric")
+  guardrailMetric     String?   @map("guardrail_metric")
+  implementationSteps Json?     @map("implementation_steps")
+  sprint              Int?
+  startDate           DateTime? @map("start_date")
+  endDate             DateTime? @map("end_date")
+  baselineMetric      String?   @map("baseline_metric")
+  resultMetric        String?   @map("result_metric")
+  improvement         String?
+  isSignificant       Boolean?  @map("is_significant")
+  decision            String?
+  learnings           String?
+  contentType         String?   @map("content_type")
+  content             Json?
+  sortOrder           Int       @default(0) @map("sort_order")
+  funnelLayer         Int?      @map("funnel_layer")
+  offerType           String?   @map("offer_type")
+  channels         String[]  @default([])
+  audienceType        String?   @map("audience_type")
+  parentOfferId       Int?      @map("parent_offer_id")
+  audienceSpecs       Json?     @map("audience_specs")
+  designBriefing      Json?     @map("design_briefing")
+  projectionInputs    Json?     @map("projection_inputs")
+  experimentCode      String?   @map("experiment_code")
+  utmSets             Json?     @map("utm_sets")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  targets ExperimentTarget[]
+
+  @@map("experiments")
+  @@schema("dashboard")
+}
+
+model GrowthLoop {
+  id           Int    @id @default(autoincrement())
+  clientId     String @map("client_id")
+  client       Client @relation(fields: [clientId], references: [id])
+  name         String
+  description  String?
+  steps        Json?
+  keyMetric    String? @map("key_metric")
+  timeToImpact String? @map("time_to_impact")
+  priority     Int     @default(0)
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  @@map("growth_loops")
+  @@schema("dashboard")
+}
+
+model Sprint {
+  id              Int    @id @default(autoincrement())
+  clientId        String @map("client_id")
+  client          Client @relation(fields: [clientId], references: [id])
+  number          Int
+  name            String
+  weeks           String?
+  focus           String?
+  activities      Json?
+  successCriteria Json?  @map("success_criteria")
+  status          String @default("upcoming")
+
+  @@map("sprints")
+  @@schema("dashboard")
+}
+
+model Benchmark {
+  id          Int      @id @default(autoincrement())
+  industry    String
+  channel     String
+  offerType   String?  @map("offer_type")
+  metricName  String   @map("metric_name")
+  unit        String
+  pessimistic Float
+  realistic   Float
+  optimistic  Float
+  direction   String   @default("lower_is_better")
+  region      String   @default("eu")
+  source      String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  experimentTargets ExperimentTarget[]
+
+  @@unique([industry, channel, offerType, metricName, region])
+  @@map("benchmarks")
+  @@schema("dashboard")
+}
+
+model ExperimentTarget {
+  id           Int         @id @default(autoincrement())
+  experimentId Int         @map("experiment_id")
+  experiment   Experiment  @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  benchmarkId  Int?        @map("benchmark_id")
+  benchmark    Benchmark?  @relation(fields: [benchmarkId], references: [id], onDelete: SetNull)
+  channel      String
+  metricName   String      @map("metric_name")
+  unit         String
+  pessimistic  Float
+  realistic    Float
+  optimistic   Float
+  actual       Float?
+  direction    String      @default("lower_is_better")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@unique([experimentId, channel, metricName])
+  @@map("experiment_targets")
+  @@schema("dashboard")
+}
+
+model Deliverable {
+  id          Int      @id @default(autoincrement())
+  clientId    String   @map("client_id")
+  client      Client   @relation(fields: [clientId], references: [id])
+  title       String
+  subtitle    String?
+  slug        String
+  category    String
+  slideCount  Int      @default(0) @map("slide_count")
+  slides      Json
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([clientId, slug])
+  @@map("deliverables")
+  @@schema("dashboard")
+}
