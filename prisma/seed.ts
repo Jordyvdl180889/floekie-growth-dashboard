@@ -9,6 +9,45 @@ import type { RiseInputs } from "../src/types";
 
 const prisma = new PrismaClient();
 
+// Transform playbook audienceSpecs format to dashboard format
+function transformAudienceSpecs(raw: any): any {
+  if (!raw || Object.keys(raw).length === 0) return null;
+  const channels = Object.entries(raw).map(([channel, spec]: [string, any]) => ({
+    channel,
+    targeting: {
+      ...(spec.targeting ? { interests: [spec.targeting] } : {}),
+      ...(spec.keywords ? { keywords: Array.isArray(spec.keywords) ? spec.keywords : [spec.keywords] } : {}),
+      ...(spec.interests ? { interests: Array.isArray(spec.interests) ? spec.interests : [spec.interests] } : {}),
+      ...(spec.behaviors ? { behaviors: Array.isArray(spec.behaviors) ? spec.behaviors : [spec.behaviors] } : {}),
+      ...(spec.retargeting ? { retargeting: { source: spec.retargeting, window: "30 days", excludeConverted: false } } : {}),
+    },
+    estimatedSize: spec.estimatedSize || spec.audienceSize || null,
+    budget: spec.budget || null,
+    notes: spec.platforms || spec.notes || null,
+  }));
+  return { channels };
+}
+
+// Transform playbook designBriefing format to dashboard format
+function transformDesignBriefing(raw: any): any {
+  if (!raw || Object.keys(raw).length === 0) return null;
+  const assets: any[] = [];
+  for (const [channel, items] of Object.entries(raw)) {
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      assets.push({
+        type: `${channel} — ${item.format || "asset"}`,
+        format: item.specs || item.format || "TBD",
+        description: item.description || "",
+        copyOnAsset: item.copyOnAsset || item.cta || "Zie content tab",
+        style: item.style || null,
+        variants: item.variants || null,
+      });
+    }
+  }
+  return assets.length > 0 ? { assets } : null;
+}
+
 function riseFields(inputs: RiseInputs) {
   const scores = calculateRise(inputs);
   return {
@@ -116,8 +155,8 @@ async function main() {
         ...expData,
         tier: tierNum,
         sortOrder,
-        ...(audienceSpecs ? { audienceSpecs: audienceSpecs as any } : {}),
-        ...(designBriefing ? { designBriefing: designBriefing as any } : {}),
+        ...(audienceSpecs ? { audienceSpecs: transformAudienceSpecs(audienceSpecs) } : {}),
+        ...(designBriefing ? { designBriefing: transformDesignBriefing(designBriefing) } : {}),
         ...riseFields(ri),
       },
     });
