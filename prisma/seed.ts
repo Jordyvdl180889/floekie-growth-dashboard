@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { floekieExperiments, floekieSprints } from "./floekie-playbook";
+import { floekieContent } from "./floekie-content";
 import { benchmarkData } from "./benchmark-data";
 import { getChannelMetricsForContentType, getChannelMetricsForExperiment } from "../src/lib/benchmark-mapping";
 import { calculateRise } from "../src/lib/rise-utils";
@@ -148,6 +149,7 @@ async function main() {
   for (const exp of floekieExperiments) {
     const { riseInputs: ri, targetSegment, tier, audienceSpecs, designBriefing, ...expData } = exp as any;
     const tierNum = tier === "L1" ? 1 : tier === "L2" ? 2 : 3;
+    const contentData = floekieContent[sortOrder];
 
     await prisma.experiment.create({
       data: {
@@ -157,6 +159,7 @@ async function main() {
         sortOrder,
         ...(audienceSpecs ? { audienceSpecs: transformAudienceSpecs(audienceSpecs) } : {}),
         ...(designBriefing ? { designBriefing: transformDesignBriefing(designBriefing) } : {}),
+        ...(contentData ? { contentType: contentData.contentType, content: contentData.content as any } : {}),
         ...riseFields(ri),
       },
     });

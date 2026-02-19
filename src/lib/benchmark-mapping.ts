@@ -48,11 +48,6 @@ const OFFER_TYPE_CHANNEL_MAPPING: Record<string, Record<string, string[]>> = {
     "meta-ads": ["cpl", "ctr"],
     "landing-page": ["conversion_rate"],
   },
-  quiz: {
-    "linkedin-ads": ["cpl", "cpc", "ctr"],
-    "meta-ads": ["cpl", "ctr"],
-    "landing-page": ["conversion_rate"],
-  },
   assessment: {
     "linkedin-ads": ["cpl", "cpc", "ctr"],
     "meta-ads": ["cpl", "ctr"],
@@ -94,6 +89,32 @@ const OFFER_TYPE_CHANNEL_MAPPING: Record<string, Record<string, string[]>> = {
     "meta-ads": ["cpl", "cpc", "ctr"],
     "landing-page": ["conversion_rate"],
   },
+  // Consumer app specific
+  quiz: {
+    "meta-ads": ["cpc", "ctr", "cpe", "cpm", "conversion_rate"],
+    "landing-page": ["conversion_rate"],
+  },
+  tool: {
+    "google-ads": ["cpc", "ctr", "conversion_rate"],
+    "landing-page": ["conversion_rate"],
+  },
+  content: {
+    "organic-social": ["engagement_rate", "follower_growth_weekly", "bio_link_clicks_weekly"],
+  },
+  retargeting: {
+    "meta-ads": ["cpa", "ctr", "conversion_rate"],
+  },
+  "email-sequence": {
+    "email-warm": ["open_rate", "click_rate", "conversion_rate", "unsubscribe_rate"],
+  },
+  subscription: {
+    "in-app": ["quiz_to_profile_rate", "monthly_churn", "retention_day_30"],
+    "landing-page": ["conversion_rate"],
+  },
+  "lead-magnet": {
+    "meta-ads": ["cpl", "cpc", "ctr", "conversion_rate"],
+    "landing-page": ["conversion_rate"],
+  },
 };
 
 /**
@@ -132,6 +153,7 @@ export function getChannelMetricsForExperiment(
  */
 function mapOfferTypeToBenchmark(offerType: string): string | null {
   const mapping: Record<string, string | null> = {
+    // B2B services
     whitepaper: "lead-magnet",
     ebook: "lead-magnet",
     toolkit: "lead-magnet",
@@ -139,7 +161,6 @@ function mapOfferTypeToBenchmark(offerType: string): string | null {
     webinar: "webinar",
     "case-study": "lead-magnet",
     calculator: "assessment",
-    quiz: "assessment",
     assessment: "assessment",
     audit: "demo-request",
     analyse: "demo-request",
@@ -147,6 +168,15 @@ function mapOfferTypeToBenchmark(offerType: string): string | null {
     "demo-request": "demo-request",
     review: "demo-request",
     poc: "demo-request",
+    // Consumer app (direct match to benchmark offerType)
+    quiz: "quiz",
+    tool: "tool",
+    retargeting: "retargeting",
+    subscription: "subscription",
+    "lead-magnet": "lead-magnet",
+    // These use null offerType in benchmarks
+    content: null,
+    "email-sequence": null,
   };
   return mapping[offerType] ?? null;
 }
