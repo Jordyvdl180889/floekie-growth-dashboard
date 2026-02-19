@@ -438,7 +438,7 @@ export const floekieExperiments = [
     targetSegment: "Quiz completers met email, zonder profiel",
     aarrStage: "activation",
     status: "draft",
-    timeline: "Week 3-6",
+    timeline: "Week 1-4",
     sprint: 1,
     cost: "€30/maand (Mailchimp/Brevo free tier)",
     expectedEffect:
